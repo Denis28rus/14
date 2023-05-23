@@ -1,0 +1,76 @@
+#include <iostream>
+#include <unordered_map>
+
+using namespace std;
+
+// Структура узла дерева
+struct TrieNode {
+    bool isEndOfWord; // флаг конца слова
+    unordered_map<char, TrieNode*> children; // хэш-таблица потомков узла
+};
+
+// Функция для создания нового узла дерева
+TrieNode* getNewNode() {
+    TrieNode* node = new TrieNode;
+    node->isEndOfWord = false;
+    return node;
+}
+
+// Функция для добавления слова в дерево
+void insert(TrieNode* root, const string& word) {
+    TrieNode* node = root;
+    for (const auto& c : word) {
+        if (!node->children.count(c)) { // если узел не имеет потомка с данным символом
+            node->children[c] = getNewNode(); // добавляем новый узел в хэш-таблицу потомков
+        }
+        node = node->children[c]; // переходим к следующему узлу
+    }
+    node->isEndOfWord = true; // помечаем последний узел как конец слова
+}
+
+// Функция для проверки, является ли строка префиксом какого-либо слова в дереве
+bool isPrefix(TrieNode* root, const string& prefix) {
+    TrieNode* node = root;
+    for (const auto& c : prefix) {
+        if (!node->children.count(c)) { // если узел не имеет потомка с данным символом
+            return false; // префикс не найден
+        }
+        node = node->children[c]; // переходим к следующему узлу
+    }
+    return true; // префикс найден
+}
+
+// Функция для поиска всех слов в дереве, начинающихся с заданного префикса
+void autocomplete(TrieNode* root, const string& prefix, string& result) {
+    TrieNode* node = root;
+    for (const auto& c : prefix) {
+        if (!node->children.count(c)) { // если узел не имеет потомка с данным символом
+            return; // выход из функции, так как префикс не найден
+        }
+        node = node->children[c]; // переходим к следующему узлу
+    }
+    // рекурсивно обходим все поддеревья, начинающиеся с найденного узла
+    function<void(TrieNode*, string&)> traverse = [&](TrieNode* node, string& s) {
+        if (node->isEndOfWord) { // если текущий узел является концом слова
+            result += s + " "; // добавляем найденное слово в результирующую строку
+        }
+        for (const auto& [c, child] : node->children) { // рекурсивно обходим потомков текущего узла
+            s.push_back(c); // добавляем символ к префиксу
+            traverse(child, s); // вызываем функцию рекурсивно для каждого потомка
+            s.pop_back(); // удаляем последний символ из префикса
+        }
+    };
+    traverse(node, prefix); // начинаем обход с найденного узла
+}
+
+int main() {
+    TrieNode* root = getNewNode(); // создаем корневой узел дерева
+
+    // Добавляем слова в дерево
+    insert(root, "apple");
+    insert(root, "banana");
+    insert(root, "orange");
+    insert(root, "pear");
+    insert(root, "peach");
+
+    // Цикл для ввода префикса и получения списка ав
